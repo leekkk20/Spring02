@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="mapperInterface.MemberMapper">
+
+	<!-- ** interface를 통해 ~Mapper 접근 => interface ~Mapper.java의 패키지명 & 파일명과 
+		~Mapper.xml의 패키지명 & 파일명 & namespace 값은 같아야 됨 => namespace : 자바 클래스에서 mapper를 
+		찾는 경로 다른 mapper와 중복되지 않도록 namespace 기재 *** mapper 기본 사항 1) #{id} : parameter로 
+		전달된 vo의 id라는 컬럼의 value가 전달됨 => getId()로 처리함, Map의 경우 키값이 id인 값을 찾음 2) ${id} 
+		: id라는 필드 표현 3) CDATA : XML에서는 <,>등 비교 연산자의 경우 XML 규칙상 에러가 나기 때문에, 이 기호를 
+		연산자로 인식하도록 하기 위해서는 SQL문을 CDATA로 묶어주어야 한다. <![CDATA[ SELECT * FROM table WHERE 
+		id > 1 ]]> 4) 조건문, 반복문, include, selectKey 등 -->
+
+
+	<!-- ** 반복문 : Member Check List 
+	=> select * from member where lev in ('A','B','C') order by id asc (추천)
+   	select * from member where lev='A' OR lev='B' OR lev='C' order by id asc (비추)
+	=> mapper 에 반복문 적용하기 : <foreach..... 
+	   비교 Java for : for ( String lev : levArr )   
+   
+	=> mapper foreach 기본형식
+   	<foreach ...index="index"..>   
+              ...... "${index}" : index 값 사용하기 
+                      사용하지 않는경우 아래처럼 표시해도 되고, 생략해도됨.
+   	<foreach .... index="" open="(" close=")" separator=",">     
+         
+	=> collection : list 또는 array Type 의 매개변수 (vo에 정의된 변수 사용)   
+   	item : collection 의  데이터 를 1건씩 전달 받으며 위의 구문을 완성함.
+   	index : 필요시 사용,  0 부터 시작 (0,1,2...)  
+	-->
+	<select id="checkList" resultType="vo.MemberVO">
+		select * from member
+		where jno in <!--  (1, 2, 3) => 지워야 함(놔두면 오류) -->
+		<foreach collection="check" item="it" open="(" close=")" separator=",">
+			#{it}
+		<!-- item : 변수명 => 여기서는 그냥 it으로 지정 -->
+		</foreach>
+		order by jno asc, id asc
+	</select>
+
+	<!-- ** SearchCriteria PageList -->
+	<sql id="search">
+		<if test="keyword != null">
+			<bind name="keyVal" value="'%' + keyword + '%'" />
+		</if>
+		<choose>
+			<when test="searchType=='i'.toString()">
+				and id like #{keyVal} )
+			</when>
+			<when test="searchType=='a'.toString()">
+				and name like #{keyVal} )
+			</when>
+			<when test="searchType=='f'.toString()">
+				and info like #{keyVal} )
+			</when>
+			<when test="searchType=='j'.toString()">
+				and jno like #{keyVal} )
+			</when>
+			<when test="searchType=='b'.toString()">
+				and birthday like #{keyVal} )
+			</when>
+			<when test="searchType=='ia'.toString()">
+				and id like #{keyVal}
+				or name like #{keyVal} )
+			</when>
+
+			<otherwise>
+				)
+			</otherwise>
+		</choose>
+	</sql>
+
+	<select id="searchList" resultType="vo.MemberVO">
+		select * from member
+		where ( id != "admin"
+		<include refid="search"></include>
+		order by id asc
+		limit #{sno}, #{rowsPerPage}
+	</select>
+
+	<select id="searchCount" resultType="int">
+		select count(*) from member
+		where ( id != "admin"
+		<include refid="search"></include>
+	</select>
+	<!-- ============================================================================================== -->
+	<!-- Junit Test : totalCount => admin을 제외한 전체 member count 메서드 추가 후 Test 
+		=> MemberMapper interface에 동륵해야 test 가능 -->
+	<select id="totalCount" resultType="int">
+		select count(*) from member
+		where id != "admin"
+	</select>
+
+	<select id="selectList" resultType="vo.MemberVO">
+		<!-- select * from member where id != "admin" --> <!-- !!!아래처럼 CDATA를 써서 <>를 써도 됨!!! -->
+		<![CDATA[select * from member where id
+		<> "admin"]]>
+	</select>
+	<select id="selectOne" resultType="vo.MemberVO">
+		select * from member where
+		id=#{id}
+	</select>
+	<!-- #{id} : parameter 로 전달된 vo 의 id 라는 컬럼의 value 가 전달됨 -> getId() 로 처리함 -->
+
+	<insert id="insert">
+		insert into member values(#{id}, #{password},
+		#{name},
+		#{info},
+		#{birthday}, #{jno}, #{age}, #{point}, #{uploadfile})
+	</insert>
+
+	<update id="update">
+		update member set password=#{password}, name=#{name},
+		info=#{info}, birthday=#{birthday},
+		jno=#{jno}, age=#{age},
+		point=#{point}, uploadfile=#{uploadfile} where id=#{id}
+	</update>
+
+	<delete id="delete">
+		delete from member where id=#{id}
+	</delete>
+
+</mapper> 

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="mapperInterface.JoMapper">
+
+<!-- 
+** interface를 통해 ~Mapper 접근
+=> interface ~Mapper.java의 패키지명 & 파일명과
+	~Mapper.xml의 패키지명 & 파일명 & namespace 값은 같아야 됨 
+	
+=> namespace : 자바 클래스에서 mapper를 찾는 경로
+	다른 mapper와 중복되지 않도록 namespace 기재
+
+*** mapper 기본 사항 
+1) #{id} : parameter로 전달된 vo의 id라는 컬럼의 value가 전달됨
+	=> getId()로 처리함, Map의 경우 키값이 id인 값을 찾음
+
+2) ${id} : id라는 필드 표현
+
+3) CDATA : XML에서는 <,>등 비교 연산자의 경우 XML 규칙상 에러가 나기 때문에,
+	이 기호를 연산자로 인식하도록 하기 위해서는 SQL문을 CDATA로 묶어주어야 한다.
+	<![CDATA[ SELECT * FROM table WHERE id > 1 ]]>
+	
+4) 조건문, 반복문, include, selectKey 등
+-->
+	<!-- Join 기능 추가 => 조장 이름 가져오기 -->
+	<select id="selectList" resultType="vo.JoVO">
+		select j.jno, j.chief, j.jname, j.note, m.name from memjo j, member m
+		where j.chief=m.id
+	</select>
+	
+	<select id="selectOne" resultType="vo.JoVO">
+		select * from memjo
+		where jno=#{jno}
+	</select>
+
+	<insert id="insert">
+		insert into memjo values(
+		#{jno}, #{chief}, #{jname}, #{note})
+	</insert>
+
+	<update id="update">
+		update memjo set chief=#{chief}, jname=#{jname},
+		note=#{note} where jno=#{jno}
+	</update>
+
+	<delete id="delete">
+		delete from memjo where jno=#{jno}
+	</delete>
+
+</mapper> 
